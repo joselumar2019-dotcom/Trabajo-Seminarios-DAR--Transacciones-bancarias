@@ -4,36 +4,31 @@
       "username": "cliente1",
       "password": "pass1234",
       "public_key": "",
-      "balance": 1250.75,
-      "batches_done": []
+      "balance": 1250.75
     },
     {
       "username": "cliente2",
       "password": "pass2345",
       "public_key": "",
-      "balance": 300.0,
-      "batches_done": []
+      "balance": 300.0
     },
     {
       "username": "cliente3",
       "password": "pass3456",
       "public_key": "",
-      "balance": 9875.2,
-      "batches_done": []
+      "balance": 9875.2
     },
     {
       "username": "cliente4",
       "password": "pass4567",
       "public_key": "",
-      "balance": 50.0,
-      "batches_done": []
+      "balance": 50.0
     },
     {
       "username": "cliente5",
       "password": "pass5678",
       "public_key": "",
-      "balance": 42000.0,
-      "batches_done": []
+      "balance": 42000.0
     }
   ]
 }
