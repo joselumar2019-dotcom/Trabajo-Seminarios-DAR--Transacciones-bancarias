@@ -6,7 +6,7 @@ socket= socket.socket()
 socket.connect((host,port))
 print("Conectado a su banco virtual")
 while True:
-    input= raw_input()
+    input= input()
     socket.send(input)
 
 socket.close()
