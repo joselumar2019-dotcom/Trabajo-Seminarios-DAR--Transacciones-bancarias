@@ -2,19 +2,29 @@ import socket
 
 host= "localhost"
 port=6345
-socket= socket.socket()
-socket.connect((host,port))
+cliente= socket.socket()
+cliente.connect((host,port))
 print("Conectado a su banco virtual")
-while True:
-    # Recibir mensaje del servidor
-    data = socket.recv(1024)   # hasta 1024 bytes
-    if data:
-        print("Servidor:", data.decode())
+try:
+    while True:
+        # Recibir mensaje del servidor
+        data = cliente.recv(4096)
+        if not data:
+            break
+            
+        mensaje = data.decode()
+        print(mensaje, end="", flush=True)
 
-    # Enviar mensaje al servidor
-    entrada = input()
-    socket.send(entrada.encode())
-socket.close()
+        # Solo habilitamos la escritura si el servidor hace una pregunta
+        if mensaje.endswith(": "):
+            entrada = input()
+            cliente.send(entrada.encode())
+        else:
+            print()
 
-print("Hasta pronto")
+except KeyboardInterrupt:
+    pass
+finally:
+    cliente.close()
+    print("\nHasta pronto")
 
