@@ -45,24 +45,18 @@ def _recibir(conexion: socket.socket) -> Optional[str]:
     try:
         datos = conexion.recv(4096)
         return datos.decode("utf-8", errors="replace").strip() if datos else None
-    except socket.timeout:
-        return ""
+    except Exception:
+        return None
 
 def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None:
     try:
-        conexion.settimeout(1.0)
+        # ¡Temporizador eliminado! Ahora espera pacientemente.
         estado = 0  # 0=USUARIO, 1=CLAVE, 2=LOTE, 3=CONFIRMAR
         autenticado_en = 0.0
         datos_usuario = {}
         pendiente = {"lote": [], "saldo": 0.0}
 
         while True:
-            # TTL: 120 segundos para re-autenticar
-            if estado in (2, 3) and (time.monotonic() - autenticado_en > 120.0):
-                _enviar(conexion, "sesion expirada")
-                estado = 1
-                continue
-
             match estado:
                 case 0:  # PEDIR_USUARIO
                     _enviar(conexion, "introduzca su usuario: ")
@@ -103,6 +97,12 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     if entrada is None: return
                     if not entrada: continue
                     
+                    # Comprobamos la inactividad de la sesión (120 seg)
+                    if time.monotonic() - autenticado_en > 120.0:
+                        _enviar(conexion, "sesion expirada")
+                        estado = 1
+                        continue
+                        
                     if len(entrada) > 256 or not re.fullmatch(r"[A-Za-z0-9 _.,;:/@#()-]+", entrada) or not entrada.endswith("/n"):
                         _enviar(conexion, "error 404 input no valido"); continue
                         
@@ -151,6 +151,12 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     entrada = _recibir(conexion)
                     if entrada is None: return
                     if not entrada: continue
+
+                    # Comprobamos la inactividad de la sesión (120 seg)
+                    if time.monotonic() - autenticado_en > 120.0:
+                        _enviar(conexion, "sesion expirada")
+                        estado = 1
+                        continue
                     
                     if entrada.lower() in ("si", "s", "yes", "y"):
                         datos_usuario["balance"] = pendiente["saldo"]
@@ -168,14 +174,15 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
             pass
         conexion.close()
 
-def iniciar_servidor(host: str = "127.0.0.1", puerto: int = 5000) -> None:
+def iniciar_servidor(host: str = "127.0.0.1", puerto: int = 6345) -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((host, puerto))
         s.listen()
+        print(f"Servidor iniciado y escuchando en el puerto {puerto}...")
         while True:
             conexion, direccion = s.accept()
             manejar_cliente(conexion, direccion)
 
 if __name__ == "__main__":
-    iniciar_servidor(puerto=6345)
+    iniciar_servidor()
