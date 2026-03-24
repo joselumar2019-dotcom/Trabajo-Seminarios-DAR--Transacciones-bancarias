@@ -4,7 +4,14 @@
       "username": "cliente1",
       "password": "pass1234",
       "public_key": "",
-      "balance": 1250.75
+      "balance": 1250.75,
+      "batches_done": [
+        {
+          "batch": "1",
+          "username": "cliente1",
+          "datetime": "2026-03-24T09:59:53"
+        }
+      ]
     },
     {
       "username": "cliente2",
