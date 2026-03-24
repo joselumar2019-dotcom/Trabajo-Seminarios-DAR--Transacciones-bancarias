@@ -59,56 +59,65 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
         while True:
             match estado:
                 case 0:  # PEDIR_USUARIO
-                    _enviar(conexion, "introduzca su usuario: ")
+                    logo = r"""
+  ____                       
+ |  _ \                      
+ | |_) | __ _ _ __   ___ ___ 
+ |  _ < / _` | '_ \ / __/ _ \
+ | |_) | (_| | | | | (_| (_) |
+ |____/ \__,_|_| |_|\___\___/
+
+"""
+                    _enviar(conexion, f"{logo}introduzca su usuario: ")
                     entrada = _recibir(conexion)
                     if entrada is None: return
                     if not entrada: continue
                     
                     if not re.fullmatch(r"[A-Za-z0-9_-]+", entrada) or len(entrada) > 64:
-                        _enviar(conexion, "error: el nombre de usuario tiene caracteres no permitidos o es muy largo"); continue
+                        _enviar(conexion, "\n[!] error: el nombre de usuario tiene caracteres no permitidos o es muy largo\n"); continue
                         
                     bd = _cargar_bd()
                     datos_usuario = next((c for c in bd.get("clients", []) if c.get("username") == entrada), None)
                     if not datos_usuario:
-                        _enviar(conexion, "usuario no existe"); continue
+                        _enviar(conexion, "\n[!] usuario no existe\n"); continue
                         
                     estado = 1
 
                 case 1:  # PEDIR_CONTRASENA
-                    _enviar(conexion, "introduzca su contraseña: ")
+                    _enviar(conexion, "\nintroduzca su contraseña: ")
                     entrada = _recibir(conexion)
                     if entrada is None: return
                     if not entrada: continue
                     
                     if len(entrada) > 64 or any(c.isspace() for c in entrada):
-                        _enviar(conexion, "error: la contrasena tiene caracteres no permitidos o es muy larga")
+                        _enviar(conexion, "\n[!] error: la contrasena tiene caracteres no permitidos o es muy larga\n")
                         estado = 0; continue
                         
                     if datos_usuario.get("password") != entrada:
-                        _enviar(conexion, "contraseña incorrecta")
+                        _enviar(conexion, "\n[!] contraseña incorrecta\n")
                         estado = 0; continue
                         
                     autenticado_en = time.monotonic()
                     estado = 2
 
                 case 2:  # PEDIR_LOTE
-                    _enviar(conexion, "lote (acciones separadas por ','). 1=saldo | 2 <cantidad>=ingresar | 3 <cantidad>=retirar: ")
+                    _enviar(conexion, "\nlote (acciones separadas por ','). 1=saldo | 2 <cantidad>=ingresar | 3 <cantidad>=retirar: ")
                     entrada = _recibir(conexion)
                     if entrada is None: return
                     if not entrada: continue
                     
                     # Comprobamos la inactividad de la sesión (120 seg)
                     if time.monotonic() - autenticado_en > 720.0:
-                        _enviar(conexion, "sesion expirada")
+                        _enviar(conexion, "\n[!] sesion expirada\n")
                         estado = 1
                         continue
                         
                     if len(entrada) > 256 or not re.fullmatch(r"[A-Za-z0-9 _.,;:/@#()-]+", entrada):
-                        _enviar(conexion, "error: el lote contiene caracteres invalidos"); continue
+                        _enviar(conexion, "\n[!] error: el lote contiene caracteres invalidos\n"); continue
                         
                     acciones_bruto = [p.strip() for p in entrada.split(",")]
                     if any(not p for p in acciones_bruto) or len(acciones_bruto) > 3:
-                        _enviar(conexion, "error: el formato del lote no es valido o supera las 3 acciones maximas"); continue
+                        _enviar(conexion, "\n[!] error: el formato del lote no es valido o supera las 3 acciones maximas\n"); continue
                         
                     saldo_temp = float(datos_usuario.get("balance", 0.0))
                     acciones_validas, errores = [], []
@@ -117,7 +126,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                         partes = a.split()
                         acc = partes[0]
                         if acc not in ("1", "2", "3") or (acc == "1" and len(partes) != 1) or (acc in ("2", "3") and len(partes) != 2):
-                            errores.append("error: accion desconocida o numero de parametros incorrecto"); continue
+                            errores.append("\n[!] error: accion desconocida o numero de parametros incorrecto\n"); continue
                             
                         cant = 0.0
                         if acc in ("2", "3"):
@@ -125,13 +134,13 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                                 cant = float(partes[1].replace(",", "."))
                                 if cant < 0: raise ValueError
                             except ValueError:
-                                errores.append("error: la cantidad introducida no es un numero valido"); continue
+                                errores.append("\n[!] error: la cantidad introducida no es un numero valido\n"); continue
                                 
                         if acc == "2":
                             saldo_temp += cant
                         elif acc == "3":
                             if cant > saldo_temp:
-                                errores.append(f"accion {acc} no tienes suficiente dinero en tu cuenta"); continue
+                                errores.append(f"\n[!] accion {acc} no tienes suficiente dinero en tu cuenta\n"); continue
                             saldo_temp -= cant
                             
                         acciones_validas.append({"action": int(acc), "amount": cant})
@@ -147,23 +156,23 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     estado = 3
 
                 case 3:  # CONFIRMAR_LOTE
-                    _enviar(conexion, "confirmar? (si/no): ")
+                    _enviar(conexion, "\nconfirmar? (si/no): ")
                     entrada = _recibir(conexion)
                     if entrada is None: return
                     if not entrada: continue
 
                     # Comprobamos la inactividad de la sesión (120 seg)
                     if time.monotonic() - autenticado_en > 720.0:
-                        _enviar(conexion, "sesion expirada")
+                        _enviar(conexion, "\n[!] sesion expirada\n")
                         estado = 1
                         continue
                     
                     if entrada.lower() in ("si", "s", "yes", "y"):
                         datos_usuario["balance"] = pendiente["saldo"]
                         _actualizar_bd(datos_usuario["username"], pendiente["saldo"], pendiente["lote"])
-                        _enviar(conexion, f"acciones realizadas ({len(pendiente['lote'])}). balance={pendiente['saldo']}")
+                        _enviar(conexion, f"\n[+] acciones realizadas ({len(pendiente['lote'])}). balance={pendiente['saldo']}\n")
                     else:
-                        _enviar(conexion, "usted ha denegado las acciones")
+                        _enviar(conexion, "\n[-] usted ha denegado las acciones\n")
                         
                     estado = 2
 

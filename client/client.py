@@ -4,7 +4,7 @@ host= "localhost"
 port=6345
 cliente= socket.socket()
 cliente.connect((host,port))
-print("Conectado a su banco virtual")
+print("\nConectado a su banco virtual    :)\n")
 try:
     while True:
         # Recibir mensaje del servidor
@@ -26,5 +26,5 @@ except KeyboardInterrupt:
     pass
 finally:
     cliente.close()
-    print("\nHasta pronto")
+    print("\nHasta pronto\nmáquina!")
 
