@@ -65,7 +65,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     if not entrada: continue
                     
                     if not re.fullmatch(r"[A-Za-z0-9_-]+", entrada) or len(entrada) > 64:
-                        _enviar(conexion, "error 404 input no valido"); continue
+                        _enviar(conexion, "error: el nombre de usuario tiene caracteres no permitidos o es muy largo"); continue
                         
                     bd = _cargar_bd()
                     datos_usuario = next((c for c in bd.get("clients", []) if c.get("username") == entrada), None)
@@ -81,7 +81,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     if not entrada: continue
                     
                     if len(entrada) > 64 or any(c.isspace() for c in entrada):
-                        _enviar(conexion, "error 404 input no valido")
+                        _enviar(conexion, "error: la contrasena tiene caracteres no permitidos o es muy larga")
                         estado = 0; continue
                         
                     if datos_usuario.get("password") != entrada:
@@ -92,7 +92,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     estado = 2
 
                 case 2:  # PEDIR_LOTE
-                    _enviar(conexion, "lote (acciones separadas por ',', termina en /n). 1=saldo | 2 <cantidad>=ingresar | 3 <cantidad>=retirar: ")
+                    _enviar(conexion, "lote (acciones separadas por ','). 1=saldo | 2 <cantidad>=ingresar | 3 <cantidad>=retirar: ")
                     entrada = _recibir(conexion)
                     if entrada is None: return
                     if not entrada: continue
@@ -103,12 +103,12 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                         estado = 1
                         continue
                         
-                    if len(entrada) > 256 or not re.fullmatch(r"[A-Za-z0-9 _.,;:/@#()-]+", entrada) or not entrada.endswith("/n"):
-                        _enviar(conexion, "error 404 input no valido"); continue
+                    if len(entrada) > 256 or not re.fullmatch(r"[A-Za-z0-9 _.,;:/@#()-]+", entrada):
+                        _enviar(conexion, "error: el lote contiene caracteres invalidos"); continue
                         
-                    acciones_bruto = [p.strip() for p in entrada[:-2].split(",")]
+                    acciones_bruto = [p.strip() for p in entrada.split(",")]
                     if any(not p for p in acciones_bruto) or len(acciones_bruto) > 3:
-                        _enviar(conexion, "error 404 input no valido"); continue
+                        _enviar(conexion, "error: el formato del lote no es valido o supera las 3 acciones maximas"); continue
                         
                     saldo_temp = float(datos_usuario.get("balance", 0.0))
                     acciones_validas, errores = [], []
@@ -117,7 +117,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                         partes = a.split()
                         acc = partes[0]
                         if acc not in ("1", "2", "3") or (acc == "1" and len(partes) != 1) or (acc in ("2", "3") and len(partes) != 2):
-                            errores.append("error 404 input no valido"); continue
+                            errores.append("error: accion desconocida o numero de parametros incorrecto"); continue
                             
                         cant = 0.0
                         if acc in ("2", "3"):
@@ -125,7 +125,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                                 cant = float(partes[1].replace(",", "."))
                                 if cant < 0: raise ValueError
                             except ValueError:
-                                errores.append("error 404 input no valido"); continue
+                                errores.append("error: la cantidad introducida no es un numero valido"); continue
                                 
                         if acc == "2":
                             saldo_temp += cant
