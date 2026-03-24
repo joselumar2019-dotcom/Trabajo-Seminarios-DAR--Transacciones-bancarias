@@ -101,15 +101,19 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     estado = 2
 
                 case 2:  # PEDIR_LOTE
-                    _enviar(conexion, "\nlote (acciones separadas por ','). 1=saldo | 2 <cantidad>=ingresar | 3 <cantidad>=retirar: ")
+                    _enviar(conexion, "\nlote (acciones separadas por ','). 1=saldo | 2 <cantidad>=ingresar | 3 <cantidad>=retirar | 4=cerras sesion: ")
                     entrada = _recibir(conexion)
                     if entrada is None: return
                     if not entrada: continue
+
+                    if entrada.strip() == "4":
+                        estado = 0
+                        continue
                     
                     # Comprobamos la inactividad de la sesión (120 seg)
                     if time.monotonic() - autenticado_en > 720.0:
                         _enviar(conexion, "\n[!] sesion expirada\n")
-                        estado = 1
+                        estado = 0
                         continue
                         
                     if len(entrada) > 256 or not re.fullmatch(r"[A-Za-z0-9 _.,;:/@#()-]+", entrada):
@@ -125,7 +129,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     for a in acciones_bruto:
                         partes = a.split()
                         acc = partes[0]
-                        if acc not in ("1", "2", "3") or (acc == "1" and len(partes) != 1) or (acc in ("2", "3") and len(partes) != 2):
+                        if acc not in ("1", "2", "3", "4") or (acc == "1" and len(partes) != 1) or (acc in ("2", "3") and len(partes) != 2):
                             errores.append("\n[!] error: accion desconocida o numero de parametros incorrecto\n"); continue
                             
                         cant = 0.0
