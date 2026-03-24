@@ -101,7 +101,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     estado = 2
 
                 case 2:  # PEDIR_LOTE
-                    _enviar(conexion, "\nlote (acciones separadas por ','). 1=saldo | 2 <cantidad>=ingresar | 3 <cantidad>=retirar | 4=cerras sesion: ")
+                    _enviar(conexion, "\nlote (acciones separadas por ','). 1=saldo | 2 <cantidad>=ingresar | 3 <cantidad>=retirar | 4=cerrar sesion: ")
                     entrada = _recibir(conexion)
                     if entrada is None: return
                     if not entrada: continue
