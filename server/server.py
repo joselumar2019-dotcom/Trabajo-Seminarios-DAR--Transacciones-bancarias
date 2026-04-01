@@ -1,42 +1,38 @@
 from __future__ import annotations
-
 import json
 import re
 import socket
 import time
+import threading
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 RUTA_BD = Path(__file__).with_name("clients_db.json")
+db_lock = threading.Lock()
 
 def _cargar_bd() -> dict:
-    with RUTA_BD.open("r", encoding="utf-8") as archivo:
-        return json.load(archivo)
+    with db_lock:
+        if not RUTA_BD.exists(): return {"clientes": []}
+        with RUTA_BD.open("r", encoding="utf-8") as archivo:
+            return json.load(archivo)
 
-def _actualizar_bd(nombre_usuario: str, nuevo_saldo: float, acciones: list[dict]) -> None:
-    bd = _cargar_bd()
-    for cliente in bd.get("clients", []):
-        if cliente.get("username") == nombre_usuario:
-            cliente["balance"] = float(nuevo_saldo)
-            partes = []
-            for accion in acciones:
-                acc, cant = accion["action"], accion["amount"]
-                if acc == 1:
-                    partes.append("1")
-                else:
-                    cant_str = str(int(cant)) if float(cant).is_integer() else str(cant)
-                    partes.append(f"{acc} {cant_str}")
-                    
-            cliente.setdefault("batches_done", []).append({
-                "batch": ",".join(partes),
-                "username": nombre_usuario,
-                "datetime": datetime.now().isoformat(timespec="seconds")
-            })
-            break
-            
-    with RUTA_BD.open("w", encoding="utf-8") as archivo:
-        json.dump(bd, archivo, ensure_ascii=False, indent=2)
+def _guardar_bd(bd: dict) -> None:
+    with db_lock:
+        with RUTA_BD.open("w", encoding="utf-8") as archivo:
+            json.dump(bd, archivo, ensure_ascii=False, indent=2)
+
+class GestorLotes:
+    def __init__(self):
+        self.lotes = {}  # {id_lote: {"user": str, "ops": [], "status": str}}
+
+    def crear_lote(self, usuario: str) -> str:
+        id_lote = str(uuid.uuid4())[:8]  # ID único
+        self.lotes[id_lote] = {"user": usuario, "ops": [], "status": "PREPARACION"}
+        return id_lote
+
+gestor_lotes= GestorLotes()
 
 def _enviar(conexion: socket.socket, texto: str) -> None:
     conexion.sendall((texto if texto else "\n").encode("utf-8"))
@@ -49,12 +45,12 @@ def _recibir(conexion: socket.socket) -> Optional[str]:
         return None
 
 def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None:
+    print(f"[+] Nueva conexión: {direccion}"
     try:
         # ¡Temporizador eliminado! Ahora espera pacientemente.
         estado = 0  # 0=USUARIO, 1=CLAVE, 2=LOTE, 3=CONFIRMAR
-        autenticado_en = 0.0
-        datos_usuario = {}
-        pendiente = {"lote": [], "saldo": 0.0}
+        user_session = ""
+        lote_id = ""
 
         while True:
             match estado:
@@ -80,20 +76,20 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     datos_usuario = next((c for c in bd.get("clients", []) if c.get("username") == entrada), None)
                     if not datos_usuario:
                         _enviar(conexion, "\n[!] usuario no existe\n"); continue
-                        
+                    user_session = entrada                        
                     estado = 1
 
                 case 1:  # PEDIR_CONTRASENA
                     _enviar(conexion, "\nintroduzca su contraseña: ")
-                    entrada = _recibir(conexion)
-                    if entrada is None: return
-                    if not entrada: continue
+                    pwd = _recibir(conexion)
+                    if pwd is None: return
+                    if not pwd: continue
                     
-                    if len(entrada) > 64 or any(c.isspace() for c in entrada):
+                    if len(pwd) > 64 or any(c.isspace() for c in pwd):
                         _enviar(conexion, "\n[!] error: la contrasena tiene caracteres no permitidos o es muy larga\n")
                         estado = 0; continue
                         
-                    if datos_usuario.get("password") != entrada:
+                    if datos_usuario.get("password") != pwd:
                         _enviar(conexion, "\n[!] contraseña incorrecta\n")
                         estado = 0; continue
                         
@@ -123,7 +119,9 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     if any(not p for p in acciones_bruto) or len(acciones_bruto) > 3:
                         _enviar(conexion, "\n[!] error: el formato del lote no es valido o supera las 3 acciones maximas\n"); continue
                         
-                    saldo_temp = float(datos_usuario.get("balance", 0.0))
+                    bd = _cargar_bd()
+                    u = next(c for c in bd["clients"] if c["username"] == user_session)
+                    saldo_temp = float(u.get("balance", 0.0))
                     acciones_validas, errores = [], []
                     
                     for a in acciones_bruto:
@@ -138,7 +136,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                                 cant = float(partes[1].replace(",", "."))
                                 if cant < 0: raise ValueError
                             except ValueError:
-                                errores.append("\n[!] error: la cantidad introducida no es un numero valido\n"); continue
+                                errores.append("\n[!] error: la cantidad introducida no es valida\n"); continue
                                 
                         if acc == "2":
                             saldo_temp += cant
@@ -154,9 +152,11 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     
                     if not acciones_validas:
                         continue
-                        
+
+                    pendiente["id"]= id_lote 
                     pendiente["lote"] = acciones_validas
                     pendiente["saldo"] = saldo_temp
+                    _enviar(conexion, f"\n[OK] Lote '{id_lote}' preparado con {len(acciones_validas)} acciones.")
                     estado = 3
 
                 case 3:  # CONFIRMAR_LOTE
