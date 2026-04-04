@@ -4,7 +4,7 @@
       "username": "cliente1",
       "password": "pass1234",
       "public_key": "",
-      "balance": 2880.75,
+      "balance": 5680.75,
       "batches_done": [
         {
           "batch": "1,2 50,3 20",
@@ -60,6 +60,56 @@
           "batch": "2 400,4 0",
           "username": "cliente1",
           "datetime": "2026-03-25T19:38:05"
+        },
+        {
+          "batch": "1",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:29:07"
+        },
+        {
+          "batch": "1,2 800",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:29:29"
+        },
+        {
+          "batch": "1,2 500",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:34:09"
+        },
+        {
+          "batch": "2 500,3 200",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:39:27"
+        },
+        {
+          "batch": "2 800",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:44:53"
+        },
+        {
+          "batch": "2 400",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:45:30"
+        },
+        {
+          "batch": "2 400",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:46:33"
+        },
+        {
+          "batch": "1",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:46:38"
+        },
+        {
+          "batch": "3 600,4 0",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:46:52"
+        },
+        {
+          "batch": "2 200",
+          "username": "cliente1",
+          "datetime": "2026-04-04T12:48:10"
         }
       ]
     },
@@ -67,7 +117,14 @@
       "username": "cliente2",
       "password": "pass2345",
       "public_key": "",
-      "balance": 300.0
+      "balance": 600.0,
+      "batches_done": [
+        {
+          "batch": "2 300",
+          "username": "cliente2",
+          "datetime": "2026-04-04T12:49:27"
+        }
+      ]
     },
     {
       "username": "cliente3",

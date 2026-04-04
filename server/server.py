@@ -14,7 +14,8 @@ db_lock = threading.Lock()
 
 def _cargar_bd() -> dict:
     with db_lock:
-        if not RUTA_BD.exists(): return {"clientes": []}
+        if not RUTA_BD.exists(): 
+            return {"clients": []}
         with RUTA_BD.open("r", encoding="utf-8") as archivo:
             return json.load(archivo)
 
@@ -23,14 +24,35 @@ def _guardar_bd(bd: dict) -> None:
         with RUTA_BD.open("w", encoding="utf-8") as archivo:
             json.dump(bd, archivo, ensure_ascii=False, indent=2)
 
+def _actualizar_bd(nombre_usuario: str, nuevo_saldo: float, acciones: list[dict]) -> None:
+    bd = _cargar_bd()
+    for cliente in bd.get("clients", []):
+        if cliente.get("username") == nombre_usuario:
+            cliente["balance"] = float(nuevo_saldo)
+            partes = []
+            for accion in acciones:
+                acc, cant = accion["action"], accion["amount"]
+                if acc == 1: partes.append("1")
+                else:
+                    cant_str = str(int(cant)) if float(cant).is_integer() else str(cant)
+                    partes.append(f"{acc} {cant_str}")
+            
+            cliente.setdefault("batches_done", []).append({
+                "batch": ",".join(partes),
+                "username": nombre_usuario,
+                "datetime": datetime.now().isoformat(timespec="seconds")
+            })
+            break
+    _guardar_bd(bd)
+
 class GestorLotes:
     def __init__(self):
-        self.lotes = {}  # {id_lote: {"user": str, "ops": [], "status": str}}
+        self.lotes = {}  # {lote_id: {"user": str, "ops": [], "status": str}}
 
     def crear_lote(self, usuario: str) -> str:
-        id_lote = str(uuid.uuid4())[:8]  # ID único
-        self.lotes[id_lote] = {"user": usuario, "ops": [], "status": "PREPARACION"}
-        return id_lote
+        lote_id = str(uuid.uuid4())[:8]  # ID único
+        self.lotes[lote_id] = {"user": usuario, "ops": [], "status": "PREPARACION"}
+        return lote_id
 
 gestor_lotes= GestorLotes()
 
@@ -45,13 +67,12 @@ def _recibir(conexion: socket.socket) -> Optional[str]:
         return None
 
 def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None:
-    print(f"[+] Nueva conexión: {direccion}"
+    print(f"[+] Nueva conexión: {direccion}")
     try:
-        # ¡Temporizador eliminado! Ahora espera pacientemente.
         estado = 0  # 0=USUARIO, 1=CLAVE, 2=LOTE, 3=CONFIRMAR
         user_session = ""
         lote_id = ""
-
+        pendiente = {"id": "", "lote": [], "saldo": 0.0}
         while True:
             match estado:
                 case 0:  # PEDIR_USUARIO
@@ -103,6 +124,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     if not entrada: continue
 
                     if entrada.strip() == "4":
+                        _enviar(conexion, "\n¡Hasta pronto!\n")
                         estado = 0
                         continue
                     
@@ -153,10 +175,9 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     if not acciones_validas:
                         continue
 
-                    pendiente["id"]= id_lote 
-                    pendiente["lote"] = acciones_validas
-                    pendiente["saldo"] = saldo_temp
-                    _enviar(conexion, f"\n[OK] Lote '{id_lote}' preparado con {len(acciones_validas)} acciones.")
+                    lote_id = gestor_lotes.crear_lote(user_session)
+                    pendiente.update({"id": lote_id, "lote": acciones_validas, "saldo": saldo_temp})
+                    _enviar(conexion, f"\n[OK] Lote '{lote_id}' preparado con {len(acciones_validas)} acciones.")
                     estado = 3
 
                 case 3:  # CONFIRMAR_LOTE
@@ -175,8 +196,25 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                         datos_usuario["balance"] = pendiente["saldo"]
                         _actualizar_bd(datos_usuario["username"], pendiente["saldo"], pendiente["lote"])
                         _enviar(conexion, f"\n[+] acciones realizadas ({len(pendiente['lote'])}). balance={pendiente['saldo']}\n")
+                        mensajes_finales = []
+                        for op in pendiente["lote"]:
+                            texto_accion = "" 
+                            
+                            if op["action"] == 1:
+                                texto_accion = f"Su saldo es {pendiente['saldo']}"
+                            elif op["action"] == 2:
+                                texto_accion = f"Ha ingresado {op['amount']}"
+                            elif op["action"] == 3:
+                                texto_accion = f"Ha retirado {op['amount']}"
+                            
+                            if texto_accion:
+                                mensajes_finales.append(texto_accion)
+                                print(f"[LOG - {user_session}]: {texto_accion}")
+
+                        respuesta_completa = "\n".join(mensajes_finales)
+                        _enviar(conexion, f"\n{respuesta_completa}\n[OK] Operación finalizada.\n")
                     else:
-                        _enviar(conexion, "\n[-] usted ha denegado las acciones\n")
+                        _enviar(conexion, "\n[-] Lote cancelado y liberado. \n")
                         
                     estado = 2
 
@@ -195,7 +233,8 @@ def iniciar_servidor(host: str = "127.0.0.1", puerto: int = 6345) -> None:
         print(f"Servidor iniciado y escuchando en el puerto {puerto}...")
         while True:
             conexion, direccion = s.accept()
-            manejar_cliente(conexion, direccion)
+            hilo = threading.Thread(target=manejar_cliente, args=(conexion, direccion))
+            hilo.start()
 
 if __name__ == "__main__":
     iniciar_servidor()
