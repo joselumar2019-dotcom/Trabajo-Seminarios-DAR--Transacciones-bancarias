@@ -39,7 +39,6 @@ def _actualizar_bd(nombre_usuario: str, nuevo_saldo: float, acciones: list[dict]
             
             cliente.setdefault("batches_done", []).append({
                 "batch": ",".join(partes),
-                "username": nombre_usuario,
                 "datetime": datetime.now().isoformat(timespec="seconds")
             })
             break
