@@ -33,6 +33,10 @@ Antes de todo, buscar la IP en la que vamos a correr el servidor, y en el códig
    ```
    *Nota: Puede iniciar tantos procesos de clientes como desee de forma simultánea, el servidor los despachará como es debido.*
 
+   Una vez dentro, se pone el usuario los cuáles son cliente1, cliente2, cliente3, cliente4 y cliente5, y sus respectivas contraseñas pass1234, pass2345 y así sucesivamente.
+   Para probar la funcionalidad, usar 1 para consultar el saldo , 2 y a continuación una cantidad para ingresar, el 3 y una cantidad para sacar y el 4 para cerrar sesión.
+   Si se hace un lote de instrucciones y alguna está mal se hace la que está bien. Si hay algún error en lso estados 0 o 1 se vuelve al 0. si hay alguno en los 2 o 3 se vuelve al 2. Si se acaba el tiempo vuelve al estado 0.
+
 ## Instrucciones para ver los archivos de Wireshark
 
 Abrir los archivos y filtrar por tcp.port==6345, se puede ver el establecimiento de la sesión y si en una traza le damos a Seguir/Follow y después a TCP Stream podemos ver el progeso de los mensajes.
