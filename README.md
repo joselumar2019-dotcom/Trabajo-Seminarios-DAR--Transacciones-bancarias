@@ -18,7 +18,7 @@ Este proyecto implementa un sistema básico de transacciones bancarias mediante 
 - 'npcaps':
 
 ## Instrucciones de Ejecución
-
+Antes de todo, buscar la IP en la que vamos a correr el servidor, y en el código client.py en la variable host poner la ip del servidor. Si es en local poner en host localhost, y en el código de server.py en la última línea, borrar lo de dentro de los paréntesis.
 1. **Iniciar el servidor**:
    Desplácese con la terminal a la carpeta `server` y ejecútelo con Python:
    ```bash
@@ -32,3 +32,8 @@ Este proyecto implementa un sistema básico de transacciones bancarias mediante 
    python client.py
    ```
    *Nota: Puede iniciar tantos procesos de clientes como desee de forma simultánea, el servidor los despachará como es debido.*
+
+## Instrucciones para ver los archivos de Wireshark
+
+Abrir los archivos y filtrar por tcp.port==6345, se puede ver el establecimiento de la sesión y si en una traza le damos a Seguir/Follow y después a TCP Stream podemos ver el progeso de los mensajes.
+
