@@ -1,5 +1,6 @@
 import socket
 
+#host="192.168.1.134" esta es la IP si queremos conectarlo con MV
 host= "localhost"
 port=6345
 cliente= socket.socket()

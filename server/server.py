@@ -236,4 +236,5 @@ def iniciar_servidor(host: str = "127.0.0.1", puerto: int = 6345) -> None:
             hilo.start()
 
 if __name__ == "__main__":
-    iniciar_servidor()
+    #iniciar_servidor()
+    iniciar_servidor(host="0.0.0.0", puerto=6345)
