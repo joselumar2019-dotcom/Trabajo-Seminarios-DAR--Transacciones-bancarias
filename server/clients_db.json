@@ -4,7 +4,7 @@
       "username": "cliente1",
       "password": "pass1234",
       "public_key": "",
-      "balance": 5680.75,
+      "balance": 5880.75,
       "batches_done": [
         {
           "batch": "1,2 50,3 20",
@@ -110,6 +110,26 @@
           "batch": "2 200",
           "username": "cliente1",
           "datetime": "2026-04-04T12:48:10"
+        },
+        {
+          "batch": "1",
+          "datetime": "2026-04-06T15:48:27"
+        },
+        {
+          "batch": "1,2 300",
+          "datetime": "2026-04-06T19:40:28"
+        },
+        {
+          "batch": "1",
+          "datetime": "2026-04-06T19:40:37"
+        },
+        {
+          "batch": "3 500",
+          "datetime": "2026-04-06T19:41:08"
+        },
+        {
+          "batch": "2 400",
+          "datetime": "2026-04-06T19:41:19"
         }
       ]
     },
@@ -117,7 +137,7 @@
       "username": "cliente2",
       "password": "pass2345",
       "public_key": "",
-      "balance": 900.0,
+      "balance": 1300.0,
       "batches_done": [
         {
           "batch": "2 300",
@@ -131,6 +151,14 @@
         {
           "batch": "2 500,3 200",
           "datetime": "2026-04-06T11:51:12"
+        },
+        {
+          "batch": "1",
+          "datetime": "2026-04-06T18:50:51"
+        },
+        {
+          "batch": "2 400,1",
+          "datetime": "2026-04-06T19:41:35"
         }
       ]
     },
@@ -166,11 +194,51 @@
       "username": "cliente4",
       "password": "pass4567",
       "public_key": "",
-      "balance": 350.0,
+      "balance": 1060.0,
       "batches_done": [
         {
           "batch": "2 300",
           "datetime": "2026-04-06T12:07:32"
+        },
+        {
+          "batch": "1",
+          "datetime": "2026-04-06T15:47:19"
+        },
+        {
+          "batch": "2 300",
+          "datetime": "2026-04-06T15:47:30"
+        },
+        {
+          "batch": "1",
+          "datetime": "2026-04-06T15:47:39"
+        },
+        {
+          "batch": "2 300,3 40",
+          "datetime": "2026-04-06T15:48:01"
+        },
+        {
+          "batch": "2 300",
+          "datetime": "2026-04-06T18:51:16"
+        },
+        {
+          "batch": "3 500",
+          "datetime": "2026-04-06T18:51:25"
+        },
+        {
+          "batch": "2 50",
+          "datetime": "2026-04-06T18:51:36"
+        },
+        {
+          "batch": "1,2 200,3 150",
+          "datetime": "2026-04-06T18:51:58"
+        },
+        {
+          "batch": "2 300",
+          "datetime": "2026-04-06T18:52:10"
+        },
+        {
+          "batch": "3 50",
+          "datetime": "2026-04-06T18:52:19"
         }
       ]
     },
