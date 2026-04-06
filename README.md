@@ -13,8 +13,9 @@ Este proyecto implementa un sistema básico de transacciones bancarias mediante 
 - `client/client.py`: Contiene el código fuente del cliente. Se encarga de conectarse al socket del servidor, retransmitir la interfaz en la consola del usuario y devolver las entradas de teclado a la máquina servidora.
 - `server/server.py`: Contiene el motor principal y código del servidor. Es capaz de manejar múltiples cuentas al mismo tiempo por hilos (`threading`), realiza validación de entradas de usuario, manipula toda la lógica de los lotes de acciones bancarias y gestiona la lectura y escritura en la base local.
 - `server/clients_db.json`: Es el archivo utilizado como base de datos. Contiene los datos persistentes de los clientes (usuario, constraseña, salario en cuenta e historial de lotes (batches)).
-- `documentación.pdf`: Documento detallado (pdf) con la memoria principal del Trabajo de Seminario para la asignatura (DAR), donde se detalla en profundidad el diseño general del proyecto.
+- `documentación.pdf`: documento en el que se encuentran los diagramas secuencia, de estados, reglas ABNF y el resto de información relevante del proyecto.
 - `README.md`: Este mismo archivo con la documentación rápida del proyecto y guion de ficheros.
+- 'npcaps':
 
 ## Instrucciones de Ejecución
 
