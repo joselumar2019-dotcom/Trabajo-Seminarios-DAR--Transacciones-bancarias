@@ -128,7 +128,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                         continue
                     
                     # Comprobamos la inactividad de la sesión (120 seg)
-                    if time.monotonic() - autenticado_en > 720.0:
+                    if time.monotonic() - autenticado_en > 120.0:
                         _enviar(conexion, "\n[!] sesion expirada\n")
                         estado = 0
                         continue
@@ -186,7 +186,7 @@ def manejar_cliente(conexion: socket.socket, direccion: tuple[str, int]) -> None
                     if not entrada: continue
 
                     # Comprobamos la inactividad de la sesión (120 seg)
-                    if time.monotonic() - autenticado_en > 720.0:
+                    if time.monotonic() - autenticado_en > 120.0:
                         _enviar(conexion, "\n[!] sesion expirada\n")
                         estado = 1
                         continue
