@@ -25,7 +25,7 @@ def main():
     # 2. Autenticación
     while True:
         password = input("Contraseña: ")
-        resp = requests.post(f"{BASE_URL}/sesiones/{session_id}/auth", json={"password": password})
+        resp = requests.put(f"{BASE_URL}/sesiones/{session_id}/auth", json={"password": password})
         if resp.status_code == 200:
             print(f"\n[Srv] {resp.json()['mensaje']}")
             break
@@ -42,7 +42,7 @@ def main():
             break
             
         # Enviar lote
-        resp = requests.post(f"{BASE_URL}/lotes", params={"session_id": session_id}, json={"instrucciones": entrada})
+        resp = requests.post(f"{BASE_URL}/sesiones/{session_id}/lotes", json={"instrucciones": entrada})
         if resp.status_code == 201:
             data = resp.json()
             print(f"\n{data['resumen']}")
@@ -50,10 +50,10 @@ def main():
             
             # Confirmar
             decision = input("> ")
-            resp_conf = requests.post(f"{BASE_URL}/lotes/{session_id}/confirmacion", json={"decision": decision})
+            resp_conf = requests.post(f"{BASE_URL}/sesiones/{session_id}/lotes/confirmacion", json={"decision": decision})
             if resp_conf.status_code == 200:
                 print(f"\n[Srv] {resp_conf.json()['mensaje']}")
-                if "saldo_final" in resp_conf.json():
+                if "saldo_final" in resp_conf.json() and resp_conf.json()["saldo_final"] is not None:
                     print(f"Saldo actual: {resp_conf.json()['saldo_final']}€")
             else:
                 print(f"[Err] {resp_conf.json()['detail']}")
